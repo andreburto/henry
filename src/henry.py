@@ -709,7 +709,7 @@ def main():
             reply = handle_prompt(bedrock_client, model_id, msg, conversation_history)
             trim_history(conversation_history)
             logger.info("Output: %s", reply)
-            print(f"[{timestamp}] Kirsche: {reply}")
+            print(f"[{timestamp}] Henry: {reply}")
         return 0
     except ClientError as e:
         logger.error("ClientError: %s", e.response['Error']['Message'])
