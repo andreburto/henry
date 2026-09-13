@@ -23,9 +23,10 @@ python3 src/henry.py
 ## To Do
 
 - Add a feature to allow routing LLM calls to hosts other than AWS.
-- Improve tool calling mechanism and error handling.
-- Add prompts and logic to guide the LLM to break down complex tasks into manageable steps.
+- Improve error handling.
 
 ## Update Log
+
+**2026-09-12:** Worked on improving the tool calling mechanism, planning, and adding tools.
 
 **2026-09-07:** Started the project using an existing POC script. This version has a loop, some tools, and uses AWS Bedrock.
