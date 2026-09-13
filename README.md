@@ -27,7 +27,7 @@ python3 src/henry.py
 
 ## Update Log
 
-* **2026-09-13:** Added Docker support, shell scripts for easier local development, and tools for file manipulation in the harness.
+**2026-09-13:** Added Docker support, shell scripts for easier local development, and tools for file manipulation in the harness.
 
 **2026-09-12:** Worked on improving the tool calling mechanism, planning, and adding tools.
 
