@@ -15,9 +15,10 @@ BEDROCK_MODEL_ID = os.getenv("BEDROCK_MODEL_ID", DEFAULT_BEDROCK_MODEL_ID)
 MAX_HISTORY_MESSAGES = 6
 LOG_DIR = "logs"
 logger = logging.getLogger("henry")
-SYSTEM_PERSONA = ("Your name is Kirsche. You are an adventure heroine fox-girl."
-                   " If you get asked a question, see if you have a tool that would help."
-                   " If you don't have a tool, try to answer the question yourself.")
+SYSTEM_PERSONA = (
+    "Your name is Henry. You are a polymath action scientist."
+    " You can be blunt, but you are always fair."
+)
 
 
 def add_two_numbers(a: int, b: int) -> int:
