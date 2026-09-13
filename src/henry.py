@@ -14,11 +14,13 @@ DEFAULT_BEDROCK_MODEL_ID = "meta.llama3-3-70b-instruct-v1:0"
 BEDROCK_MODEL_ID = os.getenv("BEDROCK_MODEL_ID", DEFAULT_BEDROCK_MODEL_ID)
 MAX_HISTORY_MESSAGES = 6
 LOG_DIR = "logs"
-logger = logging.getLogger("henry")
+HENRY_FILE_PATH = os.getenv("HENRY_FILE_PATH", os.getcwd())
 SYSTEM_PERSONA = (
     "Your name is Henry. You are a polymath action scientist."
     " You can be blunt, but you are always fair."
 )
+
+logger = logging.getLogger("henry")
 
 
 def add_two_numbers(a: int, b: int) -> int:
@@ -118,6 +120,35 @@ def get_current_time(*args, **kwargs) -> str:
     return result
 
 
+def sanitize_path(file_path: str) -> str:
+    """
+    Remove leading parent-directory components from a file path.
+
+    Args:
+        file_path (str): The path to sanitize.
+
+    Returns:
+        str: The path without leading ``..`` components.
+    """
+    sanitized_path = str(file_path)
+    while sanitized_path == ".." or sanitized_path.startswith(("../", "..\\")):
+        sanitized_path = sanitized_path[2:].lstrip("/\\")
+    return sanitized_path
+
+
+def resolve_file_path(file_path: str) -> str:
+    """
+    Resolve a sanitized file path relative to Henry's configured directory.
+
+    Args:
+        file_path (str): The path supplied to a file tool.
+
+    Returns:
+        str: The sanitized path rooted at ``HENRY_FILE_PATH``.
+    """
+    return os.path.join(HENRY_FILE_PATH, sanitize_path(file_path))
+
+
 def write_text_to_file(text: str, file_path: str) -> str:
     """
     Write text to a file, creating its parent directories when needed.
@@ -129,14 +160,51 @@ def write_text_to_file(text: str, file_path: str) -> str:
     Returns:
         str: The path of the file that was written.
     """
-    logger.debug("write_text_to_file called with file_path=%s", file_path)
-    parent_directory = os.path.dirname(file_path)
+    resolved_file_path = resolve_file_path(file_path)
+    logger.debug("write_text_to_file called with file_path=%s", resolved_file_path)
+    parent_directory = os.path.dirname(resolved_file_path)
     if parent_directory:
         os.makedirs(parent_directory, exist_ok=True)
-    with open(file_path, "w", encoding="utf-8") as file:
+    with open(resolved_file_path, "w", encoding="utf-8") as file:
         file.write(text)
-    logger.debug("write_text_to_file wrote file_path=%s", file_path)
-    return file_path
+    logger.debug("write_text_to_file wrote file_path=%s", resolved_file_path)
+    return resolved_file_path
+
+
+def read_text_from_file(file_path: str) -> str:
+    """
+    Read text from a file relative to Henry's configured directory.
+
+    Args:
+        file_path (str): The path of the file to read.
+
+    Returns:
+        str: The text read from the file.
+    """
+    resolved_file_path = resolve_file_path(file_path)
+    logger.debug("read_text_from_file called with file_path=%s", resolved_file_path)
+    with open(resolved_file_path, "r", encoding="utf-8") as file:
+        text = file.read()
+    logger.debug("read_text_from_file read file_path=%s", resolved_file_path)
+    return text
+
+
+def list_files() -> list[str]:
+    """
+    List every file beneath Henry's configured directory recursively.
+
+    Returns:
+        list[str]: Sorted file paths relative to ``HENRY_FILE_PATH``.
+    """
+    logger.debug("list_files called with HENRY_FILE_PATH=%s", HENRY_FILE_PATH)
+    file_paths = []
+    for directory_path, _, file_names in os.walk(HENRY_FILE_PATH):
+        for file_name in file_names:
+            absolute_path = os.path.join(directory_path, file_name)
+            file_paths.append(os.path.relpath(absolute_path, HENRY_FILE_PATH))
+    result = sorted(file_paths)
+    logger.debug("list_files returning %s file paths", len(result))
+    return result
 
 
 # Registry of tools available to the LLM: name -> (callable, description, JSON input schema).
@@ -219,6 +287,25 @@ TOOLS = {
             },
             "required": ["text", "file_path"],
         },
+    },
+    "read_text_from_file": {
+        "function": read_text_from_file,
+        "description": "Read text from a file.",
+        "schema": {
+            "type": "object",
+            "properties": {
+                "file_path": {
+                    "type": "string",
+                    "description": "The path of the file to read",
+                },
+            },
+            "required": ["file_path"],
+        },
+    },
+    "list_files": {
+        "function": list_files,
+        "description": "List all files below Henry's configured directory.",
+        "schema": {"type": "object", "properties": {}, "required": []},
     },
 }
 
